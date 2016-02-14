@@ -178,6 +178,15 @@
 
 -(void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
+    UITouch* touch = [[event allTouches] allObjects][0];
+    CGPoint old = [touch previousLocationInView:self];
+    CGPoint newLocation = [touch locationInView:self];
+    int xDiff = fabs(old.x - newLocation.x);
+    int yDiff = fabs(old.y - newLocation.y);
+    if(yDiff > xDiff) {
+        return;
+    }
+    
     CPTGraph *theHostedGraph = self.hostedGraph;
 
     theHostedGraph.frame = self.bounds;
@@ -191,10 +200,23 @@
     else {
         pointOfTouch = [self.layer convertPoint:pointOfTouch toLayer:theHostedGraph];
     }
-    BOOL handled = [theHostedGraph pointingDeviceDraggedEvent:event atPoint:pointOfTouch];
-
+    BOOL handled = [theHostedGraph pointingDeviceUpEvent:event atPoint:pointOfTouch];
+    
     if ( !handled ) {
-        [super touchesMoved:touches withEvent:event];
+        [super touchesEnded:touches withEvent:event];
+    }
+}
+
+-(void)didUpdateFocusInContext:(UIFocusUpdateContext *)context withAnimationCoordinator:(UIFocusAnimationCoordinator *)coordinator {
+    UIView* mainCell = self.superview.superview;
+    if(self.focused) {
+        if([mainCell respondsToSelector:@selector(showAnnotation)]) {
+            [mainCell performSelector:@selector(showAnnotation) withObject:nil];
+        }
+    } else {
+        if([mainCell respondsToSelector:@selector(hideAnnotation)]) {
+            [mainCell performSelector:@selector(hideAnnotation) withObject:nil];
+        }
     }
 }
 
